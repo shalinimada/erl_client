@@ -1,0 +1,8 @@
+{application, tcp_client,
+ [
+  {description, "TCP RPC client"},
+  {vsn, "0.1.0"},
+  {modules, [tcp_client]},
+  {registered, []},
+  {applications, [kernel, stdlib]}
+ ]}.
