@@ -1,0 +1,27 @@
+{
+    "functions": [
+        {
+            "name": "add_values",
+            "args": [
+                "int",
+                "int"
+            ],
+            "returns": "int"
+        },
+        {
+            "name": "reverse_string",
+            "args": [
+                "string"
+            ],
+            "returns": "std::string"
+        },
+        {
+            "name": "multiply_values",
+            "args": [
+                "double",
+                "double"
+            ],
+            "returns": "double"
+        }
+    ]
+}

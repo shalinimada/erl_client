@@ -29,13 +29,13 @@ start(Host, Port) ->
 call(Socket, Cmd, Args) ->
     Req = #{
         id => erlang:unique_integer([positive]),
-        cmd => binary_to_list(Cmd), %% otheriwse cpp will see list of imts
+        cmd => Cmd,%% binary_to_list(Cmd), %% otheriwse cpp will see list of imts
         args => Args
     },
 
     Bin = jsx:encode(Req),
     gen_tcp:send(Socket, encode_msg(Bin)),
-    io:format("Sent RPC: ~p~n", [Bin]),
+    io:format("Sent RPC (raw): ~p~n", [binary_to_list(Bin)]),
     ok.
 
 
@@ -75,7 +75,7 @@ wait_forever() ->
 
 
 parse_api() ->
-    {ok, Bin} = file:read_file("api.json"),
+    {ok, Bin} = file:read_file("api_spec.json"),
     Api = jsx:decode(Bin, [return_maps]),
     io:format("====  API SPEC  ====~n"),
     Functions = maps:get(<<"functions">>, Api),
@@ -104,13 +104,13 @@ make_all_calls(Socket, [Function | Rest]) ->
 
     FakeArgs =
         case Name of
-            <<"add">> -> [2, 3];
-            <<"multiply">> -> [4.0, 5.0];
-            <<"reverse">> -> ["hello world"];
+            <<"add_values">> -> [2, 3];
+            <<"multiply_values">> -> [4.0, 5.0];
+            <<"reverse_string">> -> ["hello world"];
             _ -> []
         end,
     
-    io:format("Calling ~s~n", [Name]),
+    io:format("~n~nCalling ~s~n", [Name]),
 
     call_and_wait(Socket, Name, FakeArgs),
     make_all_calls(Socket, Rest).
