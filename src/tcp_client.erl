@@ -10,52 +10,16 @@ start(Host, Port) ->
         Port,
     % active = true the socket automatically sends messages to your process mailbox:
     %% 4 byte header + payload
-        [binary, {active, true}, {packet, 4}]
+        [binary, {active, true}, {packet, 4}] %% EACH SHELL ITS OWN TCP CLIENT
     ),
     io:format("Received socket handle: ~p~n", [Socket]),
     %% connection done
 
 
     Api = parse_api(),
-
-    [First | _Rest] = maps:get(<<"functions">>, Api),
-
-    % make_all_calls(Socket, Functions),
-
-    Name = maps:get(<<"name">>, First),
-    % Args = maps:get(<<"args">>, First),
-
-    io:format("Auto calling: ~s~n", [Name]),
-
-    %% fake args just for testing
-    FakeArgs =
-        case Name of
-            <<"add">> -> [2, 3];
-            <<"multiply">> -> [4.0, 5.0];
-            <<"reverse">> -> ["hello"];
-            _ -> []
-        end,
-
-    %% bin to list because cpp doesnt understand erlang binaries 
-    call(Socket, Name, FakeArgs),
-
-    % %% Wait for response as a message
-    %% Wait for response as a message
-    receive % extracts from mailbox
-        {tcp, _Socket, Data} ->
-            io:format("Response: ~p~n", [jsx:decode(Data, [return_maps])]);
-        {tcp_closed, _Socket} ->
-            io:format("Server closed connection~n");
-        {tcp_error, _Socket, Reason} ->
-            io:format("Socket error: ~p~n", [Reason])
-    after 5000 ->  %% 5 second timeout
-        io:format("No response from server~n")
-    end,
+    make_all_calls(Socket, maps:get(<<"functions">>, Api)),
 
 
-
-    %% close conn
-    % gen_tcp:close(Socket).
     wait_forever().
 
 
@@ -65,7 +29,7 @@ start(Host, Port) ->
 call(Socket, Cmd, Args) ->
     Req = #{
         id => erlang:unique_integer([positive]),
-        cmd => Cmd,
+        cmd => binary_to_list(Cmd), %% otheriwse cpp will see list of imts
         args => Args
     },
 
@@ -142,12 +106,26 @@ make_all_calls(Socket, [Function | Rest]) ->
         case Name of
             <<"add">> -> [2, 3];
             <<"multiply">> -> [4.0, 5.0];
-            <<"reverse">> -> ["hello-world"];
+            <<"reverse">> -> ["hello world"];
             _ -> []
         end,
     
     io:format("Calling ~s~n", [Name]),
 
-    call(Socket, binary_to_list(Name), FakeArgs),
+    call_and_wait(Socket, Name, FakeArgs),
     make_all_calls(Socket, Rest).
 
+%% to send one command and wait for response before moving to next
+call_and_wait(Socket, Name, FakeArgs) ->
+
+    call(Socket, Name, FakeArgs),
+    receive % extracts from mailbox
+        {tcp, _Socket, Data} ->
+            io:format("Response: ~p~n", [jsx:decode(Data, [return_maps])]);
+        {tcp_closed, _Socket} ->
+            io:format("Server closed connection~n");
+        {tcp_error, _Socket, Reason} ->
+            io:format("Socket error: ~p~n", [Reason])
+    after 5000 ->  %% 5 second timeout
+        io:format("No response from server~n")
+    end.
