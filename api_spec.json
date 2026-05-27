@@ -13,7 +13,7 @@
             "args": [
                 "string"
             ],
-            "returns": "std::string"
+            "returns": "string"
         },
         {
             "name": "multiply_values",

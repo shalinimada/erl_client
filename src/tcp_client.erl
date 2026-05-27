@@ -15,17 +15,15 @@ start(Host, Port) ->
     io:format("Received socket handle: ~p~n", [Socket]),
     %% connection done
 
-
     Api = parse_api(),
     make_all_calls(Socket, maps:get(<<"functions">>, Api)),
 
+    %% make calls through user input 
 
     wait_forever().
 
 
 %%%%% ----------------- RPC ------------------- %%%%
-
-
 call(Socket, Cmd, Args) ->
     Req = #{
         id => erlang:unique_integer([positive]),
@@ -45,18 +43,7 @@ encode_msg(Msg) ->
     <<Len:32/big, Msg/binary>>.
 
 
-
-
-
-
-
-
-
 %%%%% ----------------- Helpers ------------------- %%%%
-
-
-
-
 %%%
 wait_forever() ->
     receive
@@ -72,8 +59,6 @@ wait_forever() ->
     end.
 
 
-
-
 parse_api() ->
     {ok, Bin} = file:read_file("api_spec.json"),
     Api = jsx:decode(Bin, [return_maps]),
@@ -87,13 +72,6 @@ parse_api() ->
     end, Functions),
     io:format("==========~n"),
     Api.
-
-
-
-
-
-
-
 
 %%%%% ---- future 
 make_all_calls(_socket, []) ->
@@ -114,6 +92,7 @@ make_all_calls(Socket, [Function | Rest]) ->
 
     call_and_wait(Socket, Name, FakeArgs),
     make_all_calls(Socket, Rest).
+
 
 %% to send one command and wait for response before moving to next
 call_and_wait(Socket, Name, FakeArgs) ->
